@@ -1,0 +1,78 @@
+================================================================
+        CATATAN BELAJAR LARAVEL ELOQUENT
+================================================================
+
+----------------------------------------------------------------
+1. Mengapa harus mendefinisikan $fillable di Model Eloquent?
+----------------------------------------------------------------
+
+ALASAN:
+  - $fillable berfungsi sebagai "daftar putih" (whitelist) yang
+    menentukan atribut mana saja yang boleh diisi secara massal
+    melalui metode Mass Assignment.
+  - Contoh: Category::create($request->all())
+
+RISIKO jika tidak didefinisikan:
+  - Aplikasi rentan terhadap Mass Assignment Vulnerability.
+  - Hacker bisa menyelipkan input berbahaya seperti:
+      * is_admin => true
+      * price => 0
+  - Database akan langsung menyimpannya tanpa validasi apapun.
+
+
+----------------------------------------------------------------
+2. Perbedaan hasMany() dan belongsTo()
+----------------------------------------------------------------
+
+Keduanya untuk relasi One-to-Many, tapi dari sudut pandang
+yang berlawanan.
+
+hasMany() -> Model INDUK (Parent):
+  - Didefinisikan di sisi induk, tabel induk TIDAK punya
+    kolom foreign key.
+  - Contoh: Category::hasMany(Product::class)
+    (1 kategori bisa punya banyak produk)
+
+belongsTo() -> Model ANAK (Child):
+  - Didefinisikan di sisi anak, tabel anak yang menyimpan
+    kolom foreign key.
+  - Contoh: Product::belongsTo(Category::class)
+    (tabel products punya kolom category_id)
+
+
+----------------------------------------------------------------
+3. Eager Loading with() vs Lazy Loading
+----------------------------------------------------------------
+
+Keuntungan utama: menghindari N+1 Query Problem.
+
+Lazy Loading (TANPA with()):
+  - Tampilkan 100 produk + kategori = 1 + 100 = 101 query!
+  - Setiap produk masing-masing nembak query sendiri ke DB.
+
+Eager Loading (DENGAN with()):
+  - Hasilnya cuma 2 query total, berapapun jumlah datanya.
+  - 1 query untuk semua produk, 1 query untuk semua kategori.
+  - Contoh: Product::with('category')->get()
+
+
+----------------------------------------------------------------
+4. Fungsi onDelete('cascade') pada foreignId()->constrained()
+----------------------------------------------------------------
+
+FUNGSI:
+  - Mengaktifkan Cascade Delete (penghapusan berantai)
+    langsung di level database MySQL.
+
+EFEK:
+  - Kalau data induk dihapus, semua data anak yang terkait
+    ikut terhapus otomatis tanpa perlu kode tambahan.
+
+CONTOH:
+  - Hapus Kategori "Elektronik" (ID=1)
+  - Semua produk dengan category_id=1 (Laptop ASUS, dll)
+    langsung ikut terhapus dari database.
+  - Mencegah orphaned data (data yatim yang nyangkut
+    di DB karena kehilangan induknya).
+
+================================================================
